@@ -6,12 +6,15 @@ on:
       - main
       - stage
     paths:
+      - '**/*.tf'  # This triggers for any Terraform file in any directory
       - terraform/**
+
   pull_request:
     branches:
       - main   # PR approval for main branch to be merged
       - stage 
     paths:
+      - '**/*.tf'  # This triggers for any Terraform file in any directory  
       - terraform/**
 
 env:
