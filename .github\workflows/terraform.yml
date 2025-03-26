@@ -1,4 +1,5 @@
 name: "Vprofile IAC"
+
 on:
   push:
     branches:
@@ -8,52 +9,51 @@ on:
       - terraform/**
   pull_request:
     branches:
-      - main   #PR approval for main branch to be merged
+      - main   # PR approval for main branch to be merged
       - stage 
     paths:
       - terraform/**
 
 env:
-# credentials for deployment to AWS
+  # Credentials for deployment to AWS
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-# S3 bucket for storing Terraform state
-  BUCKET TF_BUCKET: ${{ secrets.BUCKET_TF_BUCKET }}
+  
+  # S3 bucket for storing Terraform state
+  BUCKET_TF_BUCKET: ${{ secrets.BUCKET_TF_BUCKET }}
   AWS_REGION: "us-east-1"
   EKS_CLUSTER_NAME: vprofile-eks
 
-  jobs:
+jobs:
   terraform:
-    name: "apply terraform code changes"
-    runs-on: ubuntu-latest  # run the job on ubuntu
+    name: "Apply Terraform Code Changes"
+    runs-on: ubuntu-latest  # Run the job on an Ubuntu environment
     defaults:
       run:
         shell: bash
         working-directory: ./terraform
 
     steps:
-    - name: "Checkout source code"
-      uses: actions/checkout@v4 # checkout the source code
-    #with:
-      #terraform_version: 1.6.3
+      - name: "Checkout Source Code"
+        uses: actions/checkout@v4  # Checkout the source code
 
-    - name: Terraform Init
-      id: init
-      run: terraform init -backend-config="bucket=$BUCKET_TF_BUCKET"  -backend-config="region=$AWS_REGION"  # initialize terraform
-    
-    - name: Terraform format
-      id: format
-      run: terraform fmt -check # check if the terraform code is formatted correctly, not not user see 0 and it fails
+      - name: "Terraform Init"
+        id: init
+        run: terraform init -backend-config="bucket=$BUCKET_TF_BUCKET" -backend-config="region=$AWS_REGION"
 
-    - name: Terraform validate
-      id: validate
-      run: terraform validate # validate the terraform code - syntax check, no errors 
+      - name: "Terraform Format"
+        id: format
+        run: terraform fmt -check  # Check if the Terraform code is formatted correctly
 
-    - name: Terraform plan
-      id: plan
-      run: terraform plan -no-colour  -input=false -out planfile # create a plan file to store Terraform output. his approach ensured consistency.
-      continue-on-error: true
+      - name: "Terraform Validate"
+        id: validate
+        run: terraform validate  # Validate Terraform syntax
 
-    - name: Terraform plan status
-      if: step.plan.outcome == 'failure'
-      run: exit 1
+      - name: "Terraform Plan"
+        id: plan
+        run: terraform plan -no-color -input=false -out=planfile  # Create a plan file for consistency
+        continue-on-error: true  # Allow this step to continue even if there are issues
+
+      - name: "Terraform Plan Status"
+        if: steps.plan.outcome == 'failure'
+        run: exit 1  # Fail the workflow if Terraform plan fails
